@@ -81,6 +81,18 @@
       transform: translateY(-1px);
     }
 
+    /* 3行まとめ説明 */
+    .mode-explain {
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-sub);
+      line-height: 1.4;
+    }
+    .mode-explain strong {
+      color: #e5e7eb;
+      font-weight: 600;
+    }
+
     .legend-row {
       margin-top: 10px;
       font-size: 11px;
@@ -631,6 +643,13 @@
       </button>
     </div>
 
+    <!-- 3つの違いを一言で -->
+    <div class="mode-explain">
+      <div><strong>IaaS：</strong>資源のみクラウドまかせ（OS・ソフト・データは自前）</div>
+      <div><strong>PaaS：</strong>資源と OS・ミドルウェアはクラウド任せ（ソフト・データは自前）</div>
+      <div><strong>SaaS：</strong>資源も OS もソフトもクラウド任せ（自分のデータだけ持つ）</div>
+    </div>
+
     <div class="legend-row">
       <div class="legend-item">
         <div class="legend-box user"></div> 青：あなた
@@ -685,7 +704,9 @@
 
         <div class="run-row">
           <button class="run-btn" id="runBtn">☁️ クラウドで起動！</button>
-          <div class="run-hint" id="runHint">IaaS：資源だけクラウドから借りる</div>
+          <div class="run-hint" id="runHint">
+            IaaS：資源のみクラウドまかせ（OS・ソフト・データは自前）
+          </div>
         </div>
       </div>
 
@@ -771,19 +792,19 @@
     const modeTexts = {
       iaas: {
         configTitle: "IaaS：資源プランを選ぶ",
-        hint: "IaaS：資源だけクラウドから借りる",
+        hint: "IaaS：資源のみクラウドまかせ（OS・ソフト・データは自前）",
         screenMode: "IaaS",
         fullName: "IaaS = Infrastructure as a Service"
       },
       paas: {
         configTitle: "PaaS：OSとアプリを選ぶ",
-        hint: "PaaS：土台＋アプリをクラウドで動かす",
+        hint: "PaaS：資源と OS・ミドルウェアはクラウド任せ（ソフト・データは自前）",
         screenMode: "PaaS",
         fullName: "PaaS = Platform as a Service"
       },
       saas: {
         configTitle: "SaaS：アプリだけ選ぶ",
-        hint: "SaaS：出来上がったサービスをそのまま使う",
+        hint: "SaaS：資源も OS もソフトもクラウド任せ（自分のデータだけ持つ）",
         screenMode: "SaaS",
         fullName: "SaaS = Software as a Service"
       }
@@ -1051,7 +1072,7 @@
         row.style.display = (forMode === mode) ? "block" : "none";
       });
 
-      // テキスト
+      // テキスト（上の説明文も合わせて変更したい場合はここで別途処理してもOK）
       const t = modeTexts[mode];
       configTitleEl.textContent = t.configTitle;
       runHintEl.textContent     = t.hint;
