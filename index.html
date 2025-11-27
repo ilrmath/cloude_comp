@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>IaaS / PaaS / SaaS 視覚デモ</title>
+  <style>
+    :root {
+      --bg: #020617;
+      --panel: #020617;
+      --border: #1f2937;
+      --text-main: #e5e7eb;
+      --text-sub: #9ca3af;
+      --user: #4f46e5;
+      --provider: #f97316;
+      --accent: #22c55e;
+    }
+
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      min-height: 100vh;
+      background: radial-gradient(circle at top, #111827, #020617);
+      color: var(--text-main);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .app {
+      max-width: 980px;
+      width: 100%;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+
+    .subtitle {
+      margin-top: 4px;
+      font-size: 13px;
+      color: var(--text-sub);
+    }
+
+    .mode-buttons {
+      margin-top: 14px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .mode-btn {
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      background: #020617;
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--text-sub);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: all 0.2s ease;
+    }
+
+    .mode-btn span {
+      font-size: 11px;
+      opacity: 0.85;
+    }
+
+    .mode-btn.active {
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      border-color: transparent;
+      color: #f9fafb;
+      box-shadow: 0 8px 20px rgba(34,197,94,0.5);
+      transform: translateY(-1px);
+    }
+
+    .legend-row {
+      margin-top: 10px;
+      font-size: 11px;
+      color: var(--text-sub);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .legend-box {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+    }
+
+    .legend-box.user {
+      background: var(--user);
+    }
+
+    .legend-box.provider {
+      background: var(--provider);
+    }
+
+    .layout {
+      margin-top: 18px;
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 16px;
+    }
+
+    @media (max-width: 800px) {
+      .layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: linear-gradient(145deg, #020617, #020617, #111827);
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      box-shadow: 0 18px 40px rgba(0,0,0,0.6);
+      padding: 14px;
+    }
+
+    /* 左：設定エリア */
+
+    .config-title {
+      font-size: 14px;
+      margin-bottom: 10px;
+    }
+
+    .config-row {
+      margin-bottom: 10px;
+      font-size: 12px;
+      color: var(--text-sub);
+    }
+
+    .config-row label {
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    select {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 999px;
+      border: 1px solid #4b5563;
+      background: #020617;
+      color: var(--text-main);
+      font-size: 12px;
+      outline: none;
+    }
+
+    select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 1px rgba(34,197,94,0.4);
+    }
+
+    .run-row {
+      margin-top: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: space-between;
+      flex-wrap: wrap;
+    }
+
+    .run-btn {
+      border-radius: 999px;
+      border: none;
+      padding: 7px 18px;
+      font-size: 13px;
+      cursor: pointer;
+      color: #f9fafb;
+      background: linear-gradient(135deg, #22c55e, #16a34a);
+      box-shadow: 0 8px 20px rgba(34,197,94,0.5);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: transform 0.1s ease, box-shadow 0.1s ease;
+    }
+
+    .run-btn:active {
+      transform: translateY(1px);
+      box-shadow: 0 4px 10px rgba(34,197,94,0.5);
+    }
+
+    .run-hint {
+      font-size: 11px;
+      color: var(--text-sub);
+    }
+
+    /* 右：クラウド積み木＋PC */
+
+    .cloud-title {
+      font-size: 13px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      color: var(--text-sub);
+    }
+
+    .cloud-title-sub {
+      margin-top: 2px;
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    .cloud-title span:last-child {
+      font-size: 18px;
+    }
+
+    .cloud-inner {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+      gap: 12px;
+      align-items: center;
+    }
+
+    @media (max-width: 720px) {
+      .cloud-inner {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .stack-box {
+      border-radius: 14px;
+      border: 1px solid #1f2937;
+      background: #020617;
+      padding: 8px;
+    }
+
+    .stack {
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 8px;
+    }
+
+    .stack-layer {
+      border-radius: 10px;
+      padding: 6px 8px;
+      background: #020617;
+      border: 1px solid #1f2937;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      transform-origin: left center;
+      position: relative;
+      overflow: hidden;
+      color: #e5e7eb;
+    }
+
+    .stack-layer .label-main {
+      font-weight: 600;
+    }
+
+    .stack-layer .label-sub {
+      font-size: 10px;
+      color: var(--text-sub);
+    }
+
+    .layer-role {
+      font-size: 10px;
+      font-weight: 600;
+    }
+
+    .user-part {
+      background: linear-gradient(135deg, rgba(79,70,229,0.85), rgba(79,70,229,0.45));
+      border-color: rgba(129,140,248,0.95);
+      box-shadow: 0 8px 18px rgba(79,70,229,0.5);
+    }
+
+    .provider-part {
+      background: linear-gradient(135deg, rgba(249,115,22,0.9), rgba(249,115,22,0.5));
+      border-color: rgba(251,146,60,0.95);
+      box-shadow: 0 8px 18px rgba(249,115,22,0.5);
+    }
+
+    .build {
+      animation: build 0.35s ease-out;
+    }
+
+    @keyframes build {
+      0%   { transform: translateY(6px) scale(0.94); opacity: 0; }
+      70%  { transform: translateY(-2px) scale(1.02); opacity: 1; }
+      100% { transform: translateY(0) scale(1); opacity: 1; }
+    }
+
+    /* PCの見た目 */
+
+    .pc-box {
+      display: flex;
+      justify-content: center;
+    }
+
+    .pc-frame {
+      width: 100%;
+      max-width: 360px;
+      background: #020617;
+      border-radius: 14px 14px 8px 8px;
+      border: 1px solid #1f2937;
+      padding: 6px 8px 10px;
+      box-shadow: 0 12px 30px rgba(15,23,42,0.9);
+    }
+
+    .pc-screen {
+      border-radius: 10px;
+      height: 170px;
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      font-size: 11px;
+      color: #e5e7eb;
+      box-shadow: inset 0 0 0 1px rgba(15,23,42,0.8);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .pc-screen.iaas {
+      background: radial-gradient(circle at top, #020617, #000000);
+    }
+    .pc-screen.paas {
+      background: radial-gradient(circle at top, #0ea5e9, #1e293b);
+    }
+    .pc-screen.saas {
+      background: radial-gradient(circle at top, #22c55e, #14532d);
+    }
+
+    /* IaaS プランごとの見た目 */
+    .pc-screen.iaas-small {
+      background: radial-gradient(circle at top, #0f172a, #020617);
+      box-shadow:
+        0 0 0 1px rgba(148,163,184,0.8),
+        inset 0 0 0 1px rgba(15,23,42,0.9);
+    }
+
+    .pc-screen.iaas-medium {
+      background: radial-gradient(circle at top, #22c55e, #022c22);
+      box-shadow:
+        0 0 0 1px rgba(34,197,94,0.9),
+        inset 0 0 0 1px rgba(15,23,42,0.9);
+    }
+
+    .pc-screen.iaas-large {
+      background: radial-gradient(circle at top, #f97316, #7c2d12);
+      box-shadow:
+        0 0 0 1px rgba(249,115,22,0.95),
+        inset 0 0 0 1px rgba(15,23,42,0.9);
+    }
+
+    .pc-screen.run {
+      animation: pulse 0.5s ease-out;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(0.97); box-shadow: 0 0 0 rgba(34,197,94,0); }
+      60% { transform: scale(1.02); box-shadow: 0 0 18px rgba(34,197,94,0.8); }
+      100% { transform: scale(1); box-shadow: 0 0 4px rgba(34,197,94,0.5); }
+    }
+
+    .screen-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 10px;
+      margin-bottom: 4px;
+    }
+
+    .screen-header-left {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .dots {
+      display: flex;
+      gap: 3px;
+    }
+    .dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(15,23,42,0.9);
+    }
+
+    .screen-body {
+      flex: 1;
+      border-radius: 8px;
+      background: rgba(15,23,42,0.8);
+      padding: 6px;
+      overflow: hidden;
+    }
+
+    .pc-base {
+      margin-top: 6px;
+      height: 10px;
+      border-radius: 0 0 10px 10px;
+      background: linear-gradient(to bottom, #020617, #0b1220);
+      position: relative;
+    }
+
+    .pc-base::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      top: 2px;
+      width: 60px;
+      height: 3px;
+      border-radius: 999px;
+      background: #111827;
+      transform: translateX(-50%);
+    }
+
+    .pc-caption {
+      margin-top: 4px;
+      font-size: 10px;
+      text-align: center;
+      color: var(--text-sub);
+    }
+
+    /* アプリUI風 */
+
+    /* コンソール(IaaS) */
+    .console {
+      font-family: "SF Mono", ui-monospace, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 10px;
+      color: #e5e7eb;
+    }
+    .console-line {
+      white-space: nowrap;
+    }
+    .cursor {
+      display: inline-block;
+      width: 6px;
+      height: 10px;
+      background: #e5e7eb;
+      margin-left: 2px;
+      animation: blink 1s steps(2, start) infinite;
+    }
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      50.01%, 100% { opacity: 0; }
+    }
+
+    /* メール */
+    .mail-app {
+      display: grid;
+      grid-template-columns: 0.9fr 1.4fr;
+      gap: 4px;
+      height: 100%;
+    }
+    .mail-list {
+      background: rgba(15,23,42,0.9);
+      border-radius: 6px;
+      padding: 4px;
+    }
+    .mail-item {
+      font-size: 9px;
+      padding: 2px 3px;
+      border-radius: 4px;
+      margin-bottom: 2px;
+      background: rgba(15,23,42,0.9);
+      display: flex;
+      justify-content: space-between;
+      gap: 4px;
+    }
+    .mail-item.unread {
+      background: rgba(34,197,94,0.2);
+      font-weight: 600;
+    }
+    .mail-item span {
+      white-space: nowrap;
+    }
+    .mail-body {
+      background: rgba(15,23,42,0.9);
+      border-radius: 6px;
+      padding: 4px;
+      font-size: 9px;
+    }
+    .mail-subject {
+      font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .mail-meta {
+      font-size: 8px;
+      color: var(--text-sub);
+      margin-bottom: 4px;
+    }
+
+    /* 成績表 */
+    .grade-app {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 9px;
+      color: #e5e7eb;
+    }
+    .grade-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .grade-table {
+      border-radius: 5px;
+      overflow: hidden;
+      border: 1px solid #1f2937;
+    }
+    .grade-row {
+      display: grid;
+      grid-template-columns: 1.4fr 0.6fr 0.6fr 0.6fr;
+    }
+    .grade-cell {
+      padding: 2px 4px;
+      border-bottom: 1px solid #1f2937;
+      border-right: 1px solid #1f2937;
+      white-space: nowrap;
+    }
+    .grade-row.header {
+      background: rgba(15,23,42,0.95);
+      font-weight: 600;
+    }
+    .grade-row:nth-child(2n+1):not(.header) {
+      background: rgba(15,23,42,0.8);
+    }
+
+    /* チャット */
+    .chat-app {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      font-size: 9px;
+    }
+    .chat-body {
+      flex: 1;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .bubble-row {
+      display: flex;
+    }
+    .bubble {
+      max-width: 70%;
+      padding: 3px 6px;
+      border-radius: 10px;
+    }
+    .bubble.me {
+      margin-left: auto;
+      background: #22c55e;
+      color: #022c22;
+      border-bottom-right-radius: 2px;
+    }
+    .bubble.other {
+      margin-right: auto;
+      background: #0f172a;
+      border-bottom-left-radius: 2px;
+    }
+    .chat-input-bar {
+      margin-top: 4px;
+      height: 10px;
+      border-radius: 999px;
+      background: #020617;
+      border: 1px solid #1f2937;
+      position: relative;
+      overflow: hidden;
+    }
+    .chat-input-bar::after {
+      content: "";
+      position: absolute;
+      left: 6px;
+      top: 2px;
+      width: 40%;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(148,163,184,0.7);
+    }
+
+    /* ブログ */
+    .blog-app {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      font-size: 9px;
+    }
+    .blog-item {
+      padding: 2px 3px;
+      border-radius: 4px;
+      background: rgba(15,23,42,0.9);
+    }
+    .blog-title {
+      font-weight: 600;
+    }
+    .blog-meta {
+      font-size: 8px;
+      color: var(--text-sub);
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>クラウド：IaaS / PaaS / SaaS</h1>
+    <div class="subtitle">
+      ・上でモードを切り替える　・左で選んで　・「クラウドで起動！」で右のPC画面が変わる
+    </div>
+
+    <div class="mode-buttons">
+      <button class="mode-btn active" data-mode="iaas">
+        IaaS
+        <span>資源だけ</span>
+      </button>
+      <button class="mode-btn" data-mode="paas">
+        PaaS
+        <span>OS＋アプリ</span>
+      </button>
+      <button class="mode-btn" data-mode="saas">
+        SaaS
+        <span>アプリだけ</span>
+      </button>
+    </div>
+
+    <div class="legend-row">
+      <div class="legend-item">
+        <div class="legend-box user"></div> 青：あなた
+      </div>
+      <div class="legend-item">
+        <div class="legend-box provider"></div> オレンジ：クラウド
+      </div>
+    </div>
+
+    <div class="layout">
+      <!-- 左：設定 -->
+      <div class="panel">
+        <div class="config-title" id="configTitle">IaaS：資源プランを選ぶ</div>
+
+        <!-- IaaS -->
+        <div class="config-row" data-for="iaas">
+          <label for="iaasResource">サーバー資源（仮想マシン）</label>
+          <select id="iaasResource">
+            <option value="small">小：2 vCPU / 4GB</option>
+            <option value="medium" selected>中：4 vCPU / 8GB</option>
+            <option value="large">大：8 vCPU / 16GB</option>
+          </select>
+        </div>
+
+        <!-- PaaS -->
+        <div class="config-row" data-for="paas" style="display:none;">
+          <label for="paasOs">OS・ランタイム</label>
+          <select id="paasOs">
+            <option value="node" selected>Linux + Node.js</option>
+            <option value="python">Linux + Python</option>
+            <option value="dotnet">Windows + .NET</option>
+          </select>
+        </div>
+        <div class="config-row" data-for="paas" style="display:none;">
+          <label for="paasApp">置くアプリ</label>
+          <select id="paasApp">
+            <option value="grade" selected>成績管理アプリ</option>
+            <option value="blog">学校ブログアプリ</option>
+            <option value="chat">校内チャットアプリ</option>
+          </select>
+        </div>
+
+        <!-- SaaS -->
+        <div class="config-row" data-for="saas" style="display:none;">
+          <label for="saasApp">使うクラウドアプリ</label>
+          <select id="saasApp">
+            <option value="gradeSaaS" selected>クラウド成績管理</option>
+            <option value="mailSaaS">クラウドメール</option>
+            <option value="chatSaaS">クラウドチャット</option>
+          </select>
+        </div>
+
+        <div class="run-row">
+          <button class="run-btn" id="runBtn">☁️ クラウドで起動！</button>
+          <div class="run-hint" id="runHint">IaaS：資源だけクラウドから借りる</div>
+        </div>
+      </div>
+
+      <!-- 右：クラウド積み木＋PC -->
+      <div class="panel">
+        <div class="cloud-title">
+          <div>
+            <span>クラウドの中</span>
+            <div class="cloud-title-sub" id="modeFullName"></div>
+          </div>
+          <span>☁️</span>
+        </div>
+        <div class="cloud-inner">
+          <!-- 積み木 -->
+          <div class="stack-box">
+            <div class="stack" id="stack">
+              <div class="stack-layer" data-id="hw">
+                <div>
+                  <div class="label-main">資源</div>
+                  <div class="label-sub" id="hwSub">CPU / メモリ</div>
+                </div>
+                <div class="layer-role"></div>
+              </div>
+              <div class="stack-layer" data-id="os">
+                <div>
+                  <div class="label-main">OS・ミドルウェア</div>
+                  <div class="label-sub" id="osSub">Linux / DB など</div>
+                </div>
+                <div class="layer-role"></div>
+              </div>
+              <div class="stack-layer" data-id="app">
+                <div>
+                  <div class="label-main">アプリ</div>
+                  <div class="label-sub" id="appSub">成績 / メール / チャット</div>
+                </div>
+                <div class="layer-role"></div>
+              </div>
+              <div class="stack-layer" data-id="data">
+                <div>
+                  <div class="label-main">データ</div>
+                  <div class="label-sub" id="dataSub">成績・メッセージ</div>
+                </div>
+                <div class="layer-role"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- PC -->
+          <div>
+            <div class="pc-box">
+              <div class="pc-frame">
+                <div class="pc-screen iaas iaas-medium" id="pcScreen">
+                  <div class="screen-header">
+                    <div class="screen-header-left">
+                      <div class="dots">
+                        <div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                      </div>
+                      <span id="screenTitle">VM コンソール</span>
+                    </div>
+                    <span id="screenModeLabel">IaaS</span>
+                  </div>
+                  <div class="screen-body" id="screenBody">
+                    <!-- JSで描画 -->
+                  </div>
+                </div>
+                <div class="pc-base"></div>
+              </div>
+            </div>
+            <div class="pc-caption">このPC画面の中身は「クラウド側」で動いているイメージ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ownership = {
+      iaas: { user: ["os", "app", "data"], provider: ["hw"] },
+      paas: { user: ["app", "data"], provider: ["hw", "os"] },
+      saas: { user: ["data"], provider: ["hw", "os", "app"] }
+    };
+
+    const modeTexts = {
+      iaas: {
+        configTitle: "IaaS：資源プランを選ぶ",
+        hint: "IaaS：資源だけクラウドから借りる",
+        screenMode: "IaaS",
+        fullName: "IaaS = Infrastructure as a Service"
+      },
+      paas: {
+        configTitle: "PaaS：OSとアプリを選ぶ",
+        hint: "PaaS：土台＋アプリをクラウドで動かす",
+        screenMode: "PaaS",
+        fullName: "PaaS = Platform as a Service"
+      },
+      saas: {
+        configTitle: "SaaS：アプリだけ選ぶ",
+        hint: "SaaS：出来上がったサービスをそのまま使う",
+        screenMode: "SaaS",
+        fullName: "SaaS = Software as a Service"
+      }
+    };
+
+    let currentMode = "iaas";
+    let bootCount = 0; // 「クラウドで起動！」した回数
+
+    const stackEl      = document.getElementById("stack");
+    const configTitleEl= document.getElementById("configTitle");
+    const runHintEl    = document.getElementById("runHint");
+    const hwSubEl      = document.getElementById("hwSub");
+    const osSubEl      = document.getElementById("osSub");
+    const appSubEl     = document.getElementById("appSub");
+
+    const iaasResourceEl = document.getElementById("iaasResource");
+    const paasOsEl       = document.getElementById("paasOs");
+    const paasAppEl      = document.getElementById("paasApp");
+    const saasAppEl      = document.getElementById("saasApp");
+
+    const pcScreenEl   = document.getElementById("pcScreen");
+    const screenTitleEl= document.getElementById("screenTitle");
+    const screenModeLabelEl = document.getElementById("screenModeLabel");
+    const screenBodyEl = document.getElementById("screenBody");
+    const modeFullNameEl = document.getElementById("modeFullName");
+
+    const buttons   = document.querySelectorAll(".mode-btn");
+    const configRows= document.querySelectorAll(".config-row");
+
+    function updateOwnership(mode) {
+      const userSet = new Set(ownership[mode].user);
+      const layers = stackEl.querySelectorAll(".stack-layer");
+
+      layers.forEach(layer => {
+        const id = layer.dataset.id;
+        const isUser = userSet.has(id);
+        layer.classList.remove("user-part", "provider-part", "build");
+        void layer.offsetWidth; // アニメ再始動
+        if (isUser) {
+          layer.classList.add("user-part", "build");
+          layer.querySelector(".layer-role").textContent = "あなた";
+        } else {
+          layer.classList.add("provider-part", "build");
+          layer.querySelector(".layer-role").textContent = "クラウド";
+        }
+      });
+    }
+
+    function appKindFromValue(v) {
+      if (v === "grade" || v === "gradeSaaS") return "grade";
+      if (v === "blog") return "blog";
+      if (v === "chat" || v === "chatSaaS") return "chat";
+      if (v === "mailSaaS") return "mail";
+      return "grade";
+    }
+
+    function renderConsole(planVal, planText) {
+      const count = bootCount;
+      let cpuBar, memBar, desc;
+
+      if (planVal === "small") {
+        cpuBar = "▮▮□□□□□□";
+        memBar = "▮▮▮□□□□□";
+        desc   = "小さめ：テスト・小規模サイト向け";
+      } else if (planVal === "large") {
+        cpuBar = "▮▮▮▮▮▮▮▮";
+        memBar = "▮▮▮▮▮▮▮▮";
+        desc   = "大きめ：アクセス多めの本番向け";
+      } else { // medium
+        cpuBar = "▮▮▮▮□□□";
+        memBar = "▮▮▮▮▮□□";
+        desc   = "中くらい：ふつうの授業用サービス向け";
+      }
+
+      screenTitleEl.textContent = "VM コンソール";
+      screenBodyEl.innerHTML =
+        `<div class="console">
+          <div class="console-line">&gt; 起動回数: ${count}</div>
+          <div class="console-line">&gt; VM プラン: ${planText}</div>
+          <div class="console-line">&gt; 説明: ${desc}</div>
+          <div class="console-line">&gt; CPU [${cpuBar}]</div>
+          <div class="console-line">&gt; MEM [${memBar}]</div>
+          <div class="console-line">&gt; OS: 未インストール</div>
+          <div class="console-line">&gt; アプリ: 未インストール</div>
+          <div class="console-line">&gt; 待機中...<span class="cursor"></span></div>
+        </div>`;
+    }
+
+    function renderMailUI() {
+      screenTitleEl.textContent = "メール - 受信トレイ";
+      screenBodyEl.innerHTML = `
+        <div class="mail-app">
+          <div class="mail-list">
+            <div class="mail-item unread">
+              <span>【成績】1年A 結果入力</span><span>今朝</span>
+            </div>
+            <div class="mail-item">
+              <span>教務部からのお知らせ</span><span>昨日</span>
+            </div>
+            <div class="mail-item">
+              <span>職員会議 議事録</span><span>先週</span>
+            </div>
+          </div>
+          <div class="mail-body">
+            <div class="mail-subject">【成績】1年A 結果入力のお願い</div>
+            <div class="mail-meta">教務部 | 起動 #${bootCount}</div>
+            <div>1学期期末の成績をクラウドシステムに入力してください。</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderGradeUI(titleSuffix) {
+      screenTitleEl.textContent = "成績管理 " + titleSuffix;
+      screenBodyEl.innerHTML = `
+        <div class="grade-app">
+          <div class="grade-header">
+            <span>1年A 結果一覧</span>
+            <span>数学I | 起動 #${bootCount}</span>
+          </div>
+          <div class="grade-table">
+            <div class="grade-row header">
+              <div class="grade-cell">氏名</div>
+              <div class="grade-cell">中間</div>
+              <div class="grade-cell">期末</div>
+              <div class="grade-cell">評定</div>
+            </div>
+            <div class="grade-row">
+              <div class="grade-cell">山田</div>
+              <div class="grade-cell">78</div>
+              <div class="grade-cell">82</div>
+              <div class="grade-cell">4</div>
+            </div>
+            <div class="grade-row">
+              <div class="grade-cell">佐藤</div>
+              <div class="grade-cell">92</div>
+              <div class="grade-cell">88</div>
+              <div class="grade-cell">5</div>
+            </div>
+            <div class="grade-row">
+              <div class="grade-cell">鈴木</div>
+              <div class="grade-cell">65</div>
+              <div class="grade-cell">71</div>
+              <div class="grade-cell">3</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderChatUI() {
+      screenTitleEl.textContent = "校内チャット";
+      screenBodyEl.innerHTML = `
+        <div class="chat-app">
+          <div class="chat-body">
+            <div class="bubble-row">
+              <div class="bubble other">クラウド成績システム、起動 #${bootCount} まで確認しました。</div>
+            </div>
+            <div class="bubble-row">
+              <div class="bubble me">OK、授業でもこの画面を見せて説明します。</div>
+            </div>
+            <div class="bubble-row">
+              <div class="bubble other">ありがとうございます🙏</div>
+            </div>
+          </div>
+          <div class="chat-input-bar"></div>
+        </div>
+      `;
+    }
+
+    function renderBlogUI() {
+      screenTitleEl.textContent = "学校ブログ";
+      screenBodyEl.innerHTML = `
+        <div class="blog-app">
+          <div class="blog-item">
+            <div class="blog-title">クラウドで成績管理開始 (起動 #${bootCount})</div>
+            <div class="blog-meta">教務部 · 本日</div>
+            <div>新しいクラウド成績システムの運用をスタートしました。</div>
+          </div>
+          <div class="blog-item">
+            <div class="blog-title">情報の授業でクラウド体験</div>
+            <div class="blog-meta">情報科 · 昨日</div>
+            <div>生徒が IaaS / PaaS / SaaS を操作しながら学びました。</div>
+          </div>
+        </div>
+      `;
+    }
+
+    function updateStackLabels() {
+      if (currentMode === "iaas") {
+        const planText = iaasResourceEl.options[iaasResourceEl.selectedIndex].textContent;
+        hwSubEl.textContent = planText;
+        osSubEl.textContent = "OS / DB を自分で用意";
+        appSubEl.textContent = "アプリを自分で作成";
+      } else if (currentMode === "paas") {
+        const osText  = paasOsEl.options[paasOsEl.selectedIndex].textContent;
+        const appText = paasAppEl.options[paasAppEl.selectedIndex].textContent;
+        hwSubEl.textContent = "クラウドのハード（自動スケール）";
+        osSubEl.textContent = osText + "（クラウド管理）";
+        appSubEl.textContent = appText + "（自分で配置）";
+      } else if (currentMode === "saas") {
+        const saasText = saasAppEl.options[saasAppEl.selectedIndex].textContent;
+        hwSubEl.textContent = "クラウド事業者のデータセンター";
+        osSubEl.textContent = "OS / DB など全部クラウド";
+        appSubEl.textContent = saasText + " 本体";
+      }
+    }
+
+    function updateScreen(fromRun) {
+      // アニメーションとクラスリセット
+      pcScreenEl.classList.remove(
+        "iaas","paas","saas",
+        "iaas-small","iaas-medium","iaas-large",
+        "run"
+      );
+      void pcScreenEl.offsetWidth; // アニメ再始動
+
+      const text = modeTexts[currentMode];
+      screenModeLabelEl.textContent = text.screenMode;
+
+      if (modeFullNameEl && text.fullName) {
+        modeFullNameEl.textContent = text.fullName;
+      }
+
+      updateStackLabels();
+
+      if (currentMode === "iaas") {
+        const planVal  = iaasResourceEl.value; // small / medium / large
+        const planText = iaasResourceEl.options[iaasResourceEl.selectedIndex].textContent;
+        pcScreenEl.classList.add("iaas", `iaas-${planVal}`);
+        renderConsole(planVal, planText);
+      } else if (currentMode === "paas") {
+        pcScreenEl.classList.add("paas");
+        const appVal = paasAppEl.value;
+        const kind = appKindFromValue(appVal);
+        if (kind === "grade") renderGradeUI("(PaaS)");
+        else if (kind === "blog") renderBlogUI();
+        else if (kind === "chat") renderChatUI();
+      } else if (currentMode === "saas") {
+        pcScreenEl.classList.add("saas");
+        const appVal = saasAppEl.value;
+        const kind = appKindFromValue(appVal);
+        if (kind === "grade") renderGradeUI("(SaaS)");
+        else if (kind === "mail") renderMailUI();
+        else if (kind === "chat") renderChatUI();
+      }
+
+      if (fromRun) {
+        pcScreenEl.classList.add("run");
+      }
+    }
+
+    function switchMode(mode) {
+      currentMode = mode;
+
+      // ボタンスタイル
+      buttons.forEach(btn => {
+        btn.classList.toggle("active", btn.dataset.mode === mode);
+      });
+
+      // 設定表示
+      configRows.forEach(row => {
+        const forMode = row.getAttribute("data-for");
+        if (!forMode) return;
+        row.style.display = (forMode === mode) ? "block" : "none";
+      });
+
+      // テキスト
+      const t = modeTexts[mode];
+      configTitleEl.textContent = t.configTitle;
+      runHintEl.textContent     = t.hint;
+
+      // 積み木の色
+      updateOwnership(mode);
+
+      // 画面更新
+      updateScreen(false);
+    }
+
+    // モードボタン
+    buttons.forEach(btn => {
+      btn.addEventListener("click", () => {
+        switchMode(btn.dataset.mode);
+      });
+    });
+
+    // 「クラウドで起動！」ボタン
+    document.getElementById("runBtn").addEventListener("click", () => {
+      bootCount++;
+      updateScreen(true);
+    });
+
+    // プルダウン変更時も即反映
+    iaasResourceEl.addEventListener("change", () => updateScreen(false));
+    paasOsEl.addEventListener("change", () => updateScreen(false));
+    paasAppEl.addEventListener("change", () => updateScreen(false));
+    saasAppEl.addEventListener("change", () => updateScreen(false));
+
+    // 初期表示
+    switchMode("iaas");
+  </script>
+</body>
+</html>
